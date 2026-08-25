@@ -122,7 +122,6 @@ class SatQueryAgenticController:
 
     def _exec_vqa(self, query: str, primary_img: str, stats: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """VQA with BigEarthNet Domain Adaptation."""
-
         clc_preds = self.taxonomy.classify_from_spectral_metrics(
             ndvi_mean=stats.get("ndvi_mean", 0.35),
             water_pct=stats.get("water_percentage", 5.0),
@@ -130,24 +129,22 @@ class SatQueryAgenticController:
             mod_veg_pct=stats.get("moderate_vegetation_percentage", 35.0),
             barren_pct=stats.get("barren_builtup_percentage", 20.0)
         )
-
+        
         domain_prompt = self.taxonomy.get_domain_prompt_context(clc_preds)
-
+        
         result = self.remote_vqa.answer(
-            primary_img,
-            f"{query}\n\n{domain_prompt}",
+            primary_img, 
+            f"{query}\n\n{domain_prompt}", 
             spectral_context=stats
         )
-
+        
         result["bigearthnet_predictions"] = clc_preds
         result["domain_adaptation"] = "BigEarthNet-19 Trained Adapter"
-
+        
         return result
 
     def _exec_captioning(self, query: str, primary_img: str, stats: Dict[str, Any], **kwargs) -> Dict[str, Any]:
         """Captioning with BigEarthNet Domain-Adapted model."""
-
-        # Use the trained BigEarthNet Domain Adapter
         clc_preds = self.taxonomy.classify_from_spectral_metrics(
             ndvi_mean=stats.get("ndvi_mean", 0.35),
             water_pct=stats.get("water_percentage", 5.0),
@@ -158,21 +155,19 @@ class SatQueryAgenticController:
             nbr_mean=stats.get("nbr_mean", 0.2),
             brightness=stats.get("brightness", 0.4)
         )
-
+        
         domain_prompt = self.taxonomy.get_domain_prompt_context(clc_preds)
-
-        # Call VLM with domain-adapted context
+        
         vqa_res = self.remote_vqa.answer(
-            primary_img,
-            f"{query}\n\n{domain_prompt}",
+            primary_img, 
+            f"{query}\n\n{domain_prompt}", 
             spectral_context=stats
         )
-
-        # Attach domain adaptation evidence
+        
         vqa_res["bigearthnet_predictions"] = clc_preds
         vqa_res["domain_adaptation"] = "BigEarthNet-19 Trained Adapter"
         vqa_res["adaptation_method"] = "Fine-tuned MLP classifier on BigEarthNet-19 ontology"
-
+        
         return vqa_res
 
     def _exec_grounding(self, query: str, primary_img: str, ndvi_arr: Any, ndwi_arr: Any, **kwargs) -> Dict[str, Any]:
